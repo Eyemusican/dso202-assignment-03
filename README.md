@@ -76,4 +76,4 @@ My kind cluster, Helm v4.3.0 and Kustomize v5.8.1 (built into kubectl) were all 
 | Clean removal | `delete -k`, including the namespace in the overlay | `helm uninstall`, the namespace stays |
 | Sharing | a Git folder | a versioned `.tgz` package |
 
-Both tools deployed the same app with the same dev and prod settings. Kustomize felt simpler for my own manifests, since the base stays plain YAML that I can apply directly. Helm took more setup, but it gave me validation, a release history, one command rollback and a package I could share.
+Both tools deployed the same app with the same dev and prod settings, except that Helm dev ends with 2 backend replicas after my upgrade. Kustomize felt simpler for my own manifests, since the base stays plain YAML that I can apply directly. Helm took more setup, but it gave me validation, a release history, one command rollback and a package I could share.

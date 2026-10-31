@@ -4,13 +4,13 @@ This report covers Part A of Assignment 3, where I deployed my Assignment 1 Task
 
 ## The base
 
-I copied every Assignment 1 manifest into `kustomize/base` and removed the hardcoded namespace lines, so the base works for any environment. Instead of copying `configmap.yaml` and `secret.yaml`, I used `configMapGenerator` and `secretGenerator` with two env files. Kustomize adds a hash of the content to each generated name and rewrites every `configMapKeyRef` and `secretKeyRef` in the Deployments to match, which shows in the render below. I also gave the database Deployment `strategy: Recreate`, because a normal rolling update would start a second PostgreSQL Pod on the same data folder before the old one stops.
+I copied every Assignment 1 manifest except `namespace.yaml` into `kustomize/base` (each overlay has its own namespace file) and removed the hardcoded namespace lines, so the base works for any environment. Instead of copying `configmap.yaml` and `secret.yaml`, I used `configMapGenerator` and `secretGenerator` with two env files. Kustomize adds a hash of the content to each generated name and rewrites every `configMapKeyRef` and `secretKeyRef` in the Deployments to match, which shows in the render below. I also gave the database Deployment `strategy: Recreate`, because a normal rolling update would start a second PostgreSQL Pod on the same data folder before the old one stops.
 
 ![Base render with hashed names and rewritten references](../evidence/assignment3-02-base-render-hash-references.png)
 
 ## Dev overlay
 
-The dev overlay pulls in the base with `resources: ../../base` and only adds what is different for dev: its own namespace, environment labels and replica counts. I added the labels with `includeSelectors: false`, so the selectors stay exactly as they were in Assignment 1.
+The dev overlay pulls in the base with `resources: ../../base` and only adds what is different for dev: its own namespace, environment labels and replica counts. I added the labels with `includeSelectors: false`, so the selectors stay exactly as they were in Assignment 1. These dev screenshots show the ConfigMap hash `5hbggdmfm7`, because I took them before adding the CORS merge described in the hash section below.
 
 ![Dev overlay render, every object in the dev namespace](../evidence/assignment3-03-dev-overlay-render.png)
 ![Selectors unchanged](../evidence/assignment3-04-dev-selectors-unchanged.png)
@@ -57,12 +57,12 @@ Prod uses the same base, with these differences:
 | Change | Kustomize feature |
 | --- | --- |
 | 2 backend and 2 frontend replicas | `replicas` transformer |
-| Bigger backend CPU and memory | strategic merge patch |
+| Bigger backend CPU and memory, since prod would serve real users (500m and 512Mi are the LimitRange maximum) | strategic merge patch |
 | Bigger ResourceQuota | strategic merge patch |
 | Frontend Service becomes ClusterIP, `nodePort` removed | JSON 6902 patch from a file |
 | Owner annotation on every Deployment | inline JSON 6902 patch, with `~1` for the `/` in the key |
 
-The quota patch was needed: prod needs 1700m of CPU limits, over the Assignment 1 ceiling of 1500m, and its memory is exactly at the ceiling with no room for rollouts. NodePort 30080 is already used by dev, so prod's frontend stays internal.
+The quota patch was needed: prod needs 1700m of CPU limits, over the Assignment 1 ceiling of 1500m, and its memory is exactly at the ceiling with no room for rollouts. NodePort 30080 is already used by dev, so prod's frontend stays internal. Prod keeps `CORS_ORIGIN=*` from the base, because I open its page through a port forward on localhost:8090, not on 30080.
 
 ![Prod render](../evidence/assignment3-22-prod-overlay-render.png)
 ![Prod diff](../evidence/assignment3-23-prod-diff-preview.png)
@@ -91,7 +91,7 @@ I opened prod through two port forwards. It only had the 3 seed tasks, which sho
 
 **`namePrefix` would have broken the database connection.** The notes show `namePrefix: dev-`, but that would rename `db-svc` to `dev-db-svc` while `DB_HOST` in the ConfigMap stays `db-svc`. Kustomize does not change text inside ConfigMap data, so I left `namePrefix` out and used a separate namespace for each environment instead.
 
-**Only one Service can use NodePort 30080.** My kind cluster only maps port 30080 to my laptop, and dev already uses it. I used a JSON 6902 patch in prod to change the frontend Service to ClusterIP and remove the `nodePort` field.
+**Only one Service can use NodePort 30080.** My kind cluster only maps NodePort 30080 to my laptop, and dev already uses it. I used a JSON 6902 patch in prod to change the frontend Service to ClusterIP and remove the `nodePort` field.
 
 **A rolling update would start two PostgreSQL servers on one volume.** When the ConfigMap hash changes, the database Deployment rolls out too, and by default the new Pod starts before the old one stops. I set `strategy: Recreate` on the database in the base, so the old Pod stops first.
 

@@ -4,15 +4,15 @@ This report covers Part B of Assignment 3, where I packaged my Assignment 1 Task
 
 ## The chart
 
-`Chart.yaml` keeps the chart version (`0.1.0`) separate from the app version (`1.0`, the image tag). `values.yaml` holds every setting, with the Assignment 1 numbers as defaults, and `_helpers.tpl` holds the shared labels plus a `required` check, so the chart refuses to render until an environment is chosen.
+`Chart.yaml` keeps the chart version (`0.1.0`) separate from the app version (`1.0`, the image tag). `values.yaml` holds the settings that change between environments, with the Assignment 1 numbers as defaults, and `_helpers.tpl` holds the shared labels plus a `required` check, so the chart refuses to render until an environment is chosen.
 
 ![Chart skeleton and Chart.yaml](../evidence/assignment3-32-helm-chart-skeleton.png)
 
-The ConfigMap and Secret are built from values. One `dbName` value fills both `DB_NAME` and `POSTGRES_DB`, and one user and password fill both the `DB_*` and `POSTGRES_*` keys, so the backend and the database can never disagree, which I had to keep matching by hand in Assignment 1. Each Deployment has checksum annotations of the rendered ConfigMap and Secret, so a config change rolls out new Pods. That is the Helm version of the Kustomize name hash.
+The ConfigMap and Secret are built from values. One `dbName` value fills both `DB_NAME` and `POSTGRES_DB`, and one user and password fill both the `DB_*` and `POSTGRES_*` keys, so the backend and the database can never disagree, which I had to keep matching by hand in Assignment 1. Each Deployment has a checksum annotation of the rendered ConfigMap, and the backend and database also have one for the Secret, so a config change rolls out new Pods. That is the Helm version of the Kustomize name hash. I also added the release name to the selectors, next to the Assignment 1 app and tier labels, so two releases never select the Pods of the other release.
 
 ![Config templates rendered](../evidence/assignment3-33-helm-config-templates-render.png)
 ![Database Deployment with Recreate, selector labels and checksums](../evidence/assignment3-34-helm-db-deployment-render.png)
-![Full chart, the same 11 objects as Assignment 1](../evidence/assignment3-35-helm-full-chart-render.png)
+![Full chart, the 11 Assignment 1 objects without the Namespace](../evidence/assignment3-35-helm-full-chart-render.png)
 
 The frontend Service only writes `nodePort` when the type is NodePort, so the same template gives NodePort 30080 in dev and ClusterIP in prod. The test Pod for `helm test` only runs when I ask for it, because of its `helm.sh/hook: test` annotation.
 
@@ -20,7 +20,7 @@ The frontend Service only writes `nodePort` when the type is NodePort, so the sa
 
 ## Checking before installing
 
-`helm lint` and `helm template` passed for both environment files. Then I tried three bad inputs on purpose: no environment, wrong values, and an unquoted image tag `1.30`, which YAML reads as the number 1.3. The `required` check and `values.schema.json` stopped all of them before anything was rendered. Last, I sent the rendered chart to the API server as a server side dry run, the only check that catches a misspelled Kubernetes field.
+`helm lint` and `helm template` passed for both environment files. Then I tried three bad inputs on purpose: no environment, wrong values, and an unquoted image tag `1.30`, which YAML reads as the number 1.3. The `required` check and `values.schema.json` stopped all of them before anything was rendered. Last, I sent the rendered chart to the API server as a server side dry run, the only one of these checks that catches a misspelled Kubernetes field.
 
 ![Lint and template, dev and prod](../evidence/assignment3-37-helm-lint-template-both-envs.png)
 ![Missing environment stopped by required](../evidence/assignment3-38-helm-required-environment.png)
@@ -71,7 +71,7 @@ The same chart with `prod.yaml` gave the release `task-tracker-prod`: 2 backend 
 
 ## Problems I ran into and how I solved them
 
-**The backend Deployment was missing from the chart.** When I rendered the full chart, it showed 10 objects instead of the 11 from Assignment 1. Rendering only `templates/backend-deployment.yaml` said the template could not be found, so the file had never been created because my paste had failed. I created it again and the render showed all 11 objects. Counting the rendered objects is what caught it.
+**The backend Deployment was missing from the chart.** When I rendered the full chart, it showed 10 objects instead of 11. Rendering only `templates/backend-deployment.yaml` said the template could not be found, so the file had never been created because my paste had failed. I created it again and the render showed all 11 objects. Counting the rendered objects is what caught it.
 
 **The test Pod example from the notes would not fit my LimitRange.** The notes' test Pod asks for 10m CPU and 16Mi memory, but my Assignment 1 LimitRange has a minimum of 50m and 64Mi, so the API server would reject it. I gave my test Pod 50m and 64Mi instead.
 
@@ -83,4 +83,4 @@ The same chart with `prod.yaml` gave the release `task-tracker-prod`: 2 backend 
 
 ## What I learned
 
-One chart with a values file per environment gave the same dev and prod as my Kustomize overlays, but Helm also remembers every change as a revision, so I could see the history and roll back the whole app with one command. The `required` check and the values schema stopped bad input before anything reached the cluster, and `helm test` proved the app actually worked, not just that the objects were accepted. I also saw that Helm keeps every value in its release record, including the database password, so real credentials should not be passed through values.
+One chart with a values file per environment gave the same dev and prod as my Kustomize overlays, apart from the backend replica count in dev, but Helm also remembers every change as a revision, so I could see the history and roll back the whole app with one command. The `required` check and the values schema stopped bad input before anything reached the cluster, and `helm test` proved the app actually worked, not just that the objects were accepted. I also saw that Helm keeps every value in its release record, including the database password, so real credentials should not be passed through values.
