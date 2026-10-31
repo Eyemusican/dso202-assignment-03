@@ -1,6 +1,6 @@
 # DSO202 Assignment 3: Task Tracker with Kustomize and Helm
 
-In this assignment I deployed my Assignment 1 Task Tracker app again, but this time with the two configuration management tools from the Unit 4 notes, Kustomize and Helm, instead of applying each YAML file one by one with `kubectl apply -f`. It is the same three tier app as Assignment 1: a PostgreSQL database, a backend API and a frontend page, with the same images, the same ConfigMap and Secret values, and the same ResourceQuota and LimitRange. With each tool I deployed a dev version and a prod version from one shared source.
+In this assignment I deployed my Assignment 1 Task Tracker app again, but this time with the two configuration management tools from the Unit 4 notes, Kustomize and Helm, instead of applying each YAML file one by one with `kubectl apply -f`. It is the same three tier app as Assignment 1: a PostgreSQL database, a backend API and a frontend page, with the same images, the same ConfigMap and Secret values (apart from CORS_ORIGIN in dev), and the same ResourceQuota and LimitRange. With each tool I deployed a dev version and a prod version from one shared source.
 
 The full write up for each tool, with screenshots and the problems I ran into, is in the two reports linked at the end of this page.
 

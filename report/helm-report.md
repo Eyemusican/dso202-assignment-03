@@ -48,7 +48,7 @@ Revision 2 scaled the backend to 2 replicas by changing `dev.yaml` and passing t
 ![Values lost in revision 3](../evidence/assignment3-47-helm-upgrade-values-lost.png)
 ![Rollback, revision 4](../evidence/assignment3-48-helm-rollback-revision-4.png)
 
-All Pods were replaced during revisions 3 and 4, but `helm test` still passed and task #4 was still on the page. The new Pods even came back with the same ReplicaSet hashes as revision 2, since revision 4 is an exact copy of it. The rollback only reapplied the manifests, it did not touch the data on the PVC.
+All Pods were replaced during revisions 3 and 4, but `helm test` still passed (the Pod list in the screenshot was taken just before the new test run) and task #4 was still on the page. The new Pods even came back with the same ReplicaSet hashes as revision 2, since revision 4 is an exact copy of it. The rollback only reapplied the manifests, it did not touch the data on the PVC.
 
 ![After the rollback](../evidence/assignment3-49-helm-after-rollback-pods-test.png)
 ![Data kept](../evidence/assignment3-50-helm-after-rollback-data-kept.png)

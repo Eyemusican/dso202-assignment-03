@@ -4,7 +4,7 @@ This report covers Part A of Assignment 3, where I deployed my Assignment 1 Task
 
 ## The base
 
-I copied every Assignment 1 manifest except `namespace.yaml` into `kustomize/base` (each overlay has its own namespace file) and removed the hardcoded namespace lines, so the base works for any environment. Instead of copying `configmap.yaml` and `secret.yaml`, I used `configMapGenerator` and `secretGenerator` with two env files. Kustomize adds a hash of the content to each generated name and rewrites every `configMapKeyRef` and `secretKeyRef` in the Deployments to match, which shows in the render below. I also gave the database Deployment `strategy: Recreate`, because a normal rolling update would start a second PostgreSQL Pod on the same data folder before the old one stops.
+I copied every Assignment 1 manifest except `namespace.yaml`, `configmap.yaml` and `secret.yaml` into `kustomize/base` (each overlay has its own namespace file) and removed the hardcoded namespace lines, so the base works for any environment. For the ConfigMap and Secret, I used `configMapGenerator` and `secretGenerator` with two env files. Kustomize adds a hash of the content to each generated name and rewrites every `configMapKeyRef` and `secretKeyRef` in the Deployments to match, which shows in the render below. I also gave the database Deployment `strategy: Recreate`, because a normal rolling update would start a second PostgreSQL Pod on the same data folder before the old one stops.
 
 ![Base render with hashed names and rewritten references](../evidence/assignment3-02-base-render-hash-references.png)
 
@@ -25,7 +25,7 @@ Before applying I rendered and diffed. The first diff failed because the dev nam
 Then I applied the whole overlay with one command and checked everything it created.
 
 ![Apply](../evidence/assignment3-08-dev-apply.png)
-![Pods running](../evidence/assignment3-09-dev-pods-running.png)
+![Pods running (watch output, so the frontend Pod is listed twice)](../evidence/assignment3-09-dev-pods-running.png)
 ![All resources, PVC bound, quota counting](../evidence/assignment3-10-dev-all-resources.png)
 ![Backend connected to the database](../evidence/assignment3-11-dev-backend-connected.png)
 
