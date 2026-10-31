@@ -1,0 +1,7 @@
+# JSON 6902: exact operations at exact paths.
+# NodePort 30080 belongs to dev, so prod's frontend is internal only.
+- op: replace
+  path: /spec/type
+  value: ClusterIP
+- op: remove
+  path: /spec/ports/0/nodePort

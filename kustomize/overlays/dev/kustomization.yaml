@@ -1,0 +1,34 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Compose: the shared base plus the dev namespace
+resources:
+  - ../../base
+  - namespace.yaml
+
+# Transform: put every object into the dev namespace
+namespace: dso202-a3-kustomize-dev
+
+# Transform: label every object and Pod template with the environment,
+# but never the selectors (Deployment selectors are immutable)
+labels:
+  - pairs:
+      app.kubernetes.io/environment: dev
+      app.kubernetes.io/part-of: task-tracker
+    includeSelectors: false
+    includeTemplates: true
+
+# Purpose built change: dev runs one copy of each tier
+replicas:
+  - name: backend-deployment
+    count: 1
+  - name: frontend-deployment
+    count: 1
+
+# Generate: dev only allows browser requests from its own frontend.
+# behavior: merge keeps the other 6 base keys and overrides only this one.
+configMapGenerator:
+  - name: task-tracker-config
+    behavior: merge
+    literals:
+      - CORS_ORIGIN=http://localhost:30080

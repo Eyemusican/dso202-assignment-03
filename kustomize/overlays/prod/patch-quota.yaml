@@ -1,0 +1,14 @@
+# Strategic merge: prod runs 2 backend + 2 frontend replicas.
+# With the Assignment 1 quota, prod would need 1700m CPU limits against
+# a 1500m ceiling, and rollouts need room for extra surge Pods.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: task-tracker-quota
+spec:
+  hard:
+    pods: "10"
+    requests.cpu: "1500m"
+    requests.memory: 2Gi
+    limits.cpu: "3000m"
+    limits.memory: 3Gi
