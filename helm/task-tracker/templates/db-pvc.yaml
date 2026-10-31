@@ -1,0 +1,16 @@
+{{- /*
+db-pvc.yaml - storage for PostgreSQL data, so data survives Pod restarts.
+*/}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-pvc
+  labels:
+    {{- include "task-tracker.labels" . | nindent 4 }}
+    tier: database
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.database.storage }}

@@ -1,0 +1,32 @@
+# environments/prod.yaml - overrides for the production release.
+environment: prod
+
+backend:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+frontend:
+  replicaCount: 2
+  service:
+    # Internal only: NodePort 30080 belongs to dev.
+    type: ClusterIP
+    # null deletes the chart default, so no nodePort is written.
+    nodePort: null
+
+# 2 backend + 2 frontend replicas exceed the Assignment 1 quota
+# (1700m CPU limits against 1500m), plus room for rollout surge
+# and the helm test Pod.
+quota:
+  pods: "10"
+  requests:
+    cpu: 1500m
+    memory: 2Gi
+  limits:
+    cpu: 3000m
+    memory: 3Gi

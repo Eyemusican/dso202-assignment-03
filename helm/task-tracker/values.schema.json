@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "task-tracker values",
+  "type": "object",
+  "required": ["environment", "config", "secret", "database", "backend", "frontend", "quota", "limitRange"],
+  "properties": {
+    "environment": { "enum": ["", "dev", "prod"] },
+    "config": {
+      "type": "object",
+      "required": ["dbName", "dbPort", "appPort", "corsOrigin", "backendUrl"],
+      "properties": {
+        "dbName": { "type": "string", "minLength": 1 },
+        "dbPort": { "type": "string", "pattern": "^[0-9]+$" },
+        "appPort": { "type": "string", "pattern": "^[0-9]+$" },
+        "corsOrigin": { "type": "string", "minLength": 1 },
+        "backendUrl": { "type": "string", "pattern": "^https?://" }
+      }
+    },
+    "secret": {
+      "type": "object",
+      "required": ["dbUser", "dbPassword"],
+      "properties": {
+        "dbUser": { "type": "string", "minLength": 1 },
+        "dbPassword": { "type": "string", "minLength": 8 }
+      }
+    },
+    "database": {
+      "type": "object",
+      "required": ["image", "storage", "resources"],
+      "properties": {
+        "image": { "$ref": "#/$defs/image" },
+        "storage": { "type": "string", "pattern": "^[0-9]+(Mi|Gi)$" },
+        "resources": { "type": "object" }
+      }
+    },
+    "backend": {
+      "type": "object",
+      "required": ["replicaCount", "image", "resources"],
+      "properties": {
+        "replicaCount": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "image": { "$ref": "#/$defs/image" },
+        "resources": { "type": "object" }
+      }
+    },
+    "frontend": {
+      "type": "object",
+      "required": ["replicaCount", "image", "resources", "service"],
+      "properties": {
+        "replicaCount": { "type": "integer", "minimum": 1, "maximum": 5 },
+        "image": { "$ref": "#/$defs/image" },
+        "resources": { "type": "object" },
+        "service": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": { "enum": ["NodePort", "ClusterIP"] },
+            "nodePort": { "type": ["integer", "null"], "minimum": 30000, "maximum": 32767 }
+          }
+        }
+      }
+    },
+    "quota": { "type": "object" },
+    "limitRange": { "type": "object" }
+  },
+  "$defs": {
+    "image": {
+      "type": "object",
+      "required": ["repository", "tag", "pullPolicy"],
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "tag": { "type": "string" },
+        "pullPolicy": { "enum": ["Always", "IfNotPresent", "Never"] }
+      }
+    }
+  }
+}

@@ -1,0 +1,16 @@
+# environments/dev.yaml - overrides for the development release.
+environment: dev
+
+# Dev only accepts browser requests from its own frontend (same as the
+# Kustomize dev overlay).
+config:
+  corsOrigin: "http://localhost:30080"
+
+backend:
+  replicaCount: 2
+
+frontend:
+  replicaCount: 1
+  service:
+    type: NodePort
+    nodePort: 30080

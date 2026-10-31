@@ -1,0 +1,19 @@
+{{- /*
+db-service.yaml - headless Service (no cluster IP) so the backend reaches
+PostgreSQL by the DNS name db-svc, as in Assignment 1.
+*/}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-svc
+  labels:
+    {{- include "task-tracker.labels" . | nindent 4 }}
+    tier: database
+spec:
+  clusterIP: None
+  selector:
+    {{- include "task-tracker.selectorLabels" . | nindent 4 }}
+    tier: database
+  ports:
+    - port: 5432
+      targetPort: 5432

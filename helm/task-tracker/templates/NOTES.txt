@@ -1,0 +1,18 @@
+Release {{ .Release.Name }} (revision {{ .Release.Revision }}) is running in namespace {{ .Release.Namespace }}.
+Environment: {{ include "task-tracker.environment" . }}, backend replicas: {{ .Values.backend.replicaCount }}, frontend replicas: {{ .Values.frontend.replicaCount }}.
+
+The backend is ClusterIP (internal only). To reach it from this laptop:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/backend-svc 8080:8080
+  curl http://localhost:8080/api/tasks
+{{- if eq .Values.frontend.service.type "NodePort" }}
+
+Open the frontend (keep the port-forward above running, the page calls backend-svc:8080):
+  http://localhost:{{ .Values.frontend.service.nodePort }}
+{{- else }}
+
+The frontend is ClusterIP. Forward it, then open http://localhost:8090
+  kubectl -n {{ .Release.Namespace }} port-forward svc/frontend-svc 8090:8080
+{{- end }}
+
+Run the chart tests:
+  helm test {{ .Release.Name }} -n {{ .Release.Namespace }}

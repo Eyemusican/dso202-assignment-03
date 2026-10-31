@@ -1,0 +1,18 @@
+{{- /*
+backend-service.yaml - ClusterIP, internal only, as Assignment 1 required.
+*/}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-svc
+  labels:
+    {{- include "task-tracker.labels" . | nindent 4 }}
+    tier: backend
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "task-tracker.selectorLabels" . | nindent 4 }}
+    tier: backend
+  ports:
+    - port: 8080
+      targetPort: 8080

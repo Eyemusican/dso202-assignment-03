@@ -1,0 +1,39 @@
+{{- /*
+frontend-deployment.yaml - the web page, replicaCount copies.
+Only needs BACKEND_URL, so only the ConfigMap checksum is used.
+*/}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  labels:
+    {{- include "task-tracker.labels" . | nindent 4 }}
+    tier: frontend
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "task-tracker.selectorLabels" . | nindent 6 }}
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        {{- include "task-tracker.labels" . | nindent 8 }}
+        tier: frontend
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      containers:
+        - name: frontend
+          image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: BACKEND_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: task-tracker-config
+                  key: BACKEND_URL
+          resources:
+            {{- toYaml .Values.frontend.resources | nindent 12 }}

@@ -1,0 +1,19 @@
+{{- /*
+configmap.yaml - Assignment 1 task-tracker-config, built from .Values.config.
+One value (config.dbName) feeds both DB_NAME and POSTGRES_DB, so the
+backend and the database can never disagree about the database name.
+*/}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: task-tracker-config
+  labels:
+    {{- include "task-tracker.labels" . | nindent 4 }}
+data:
+  DB_HOST: "db-svc"
+  DB_PORT: {{ .Values.config.dbPort | quote }}
+  DB_NAME: {{ .Values.config.dbName | quote }}
+  APP_PORT: {{ .Values.config.appPort | quote }}
+  CORS_ORIGIN: {{ .Values.config.corsOrigin | quote }}
+  POSTGRES_DB: {{ .Values.config.dbName | quote }}
+  BACKEND_URL: {{ .Values.config.backendUrl | quote }}

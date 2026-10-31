@@ -1,0 +1,97 @@
+# values.yaml - default configuration of the task-tracker chart.
+# Every key can be overridden with -f <file> or --set <key>=<value>.
+# The defaults reproduce the Assignment 1 manifests exactly.
+
+# Environment name. No default on purpose: the chart refuses to render
+# until one is chosen (enforced with "required" in _helpers.tpl).
+environment: ""
+
+# Application settings. Rendered into the task-tracker-config ConfigMap.
+# ConfigMap data must be strings, so the ports are quoted.
+config:
+  dbName: taskdb
+  dbPort: "5432"
+  appPort: "8080"
+  corsOrigin: "*"
+  backendUrl: "http://backend-svc:8080"
+
+# Database credentials. Rendered into the task-tracker-secret Secret.
+# Class dummy values only: Helm stores every value in its release
+# record, so real passwords must never be passed this way.
+secret:
+  dbUser: taskuser
+  dbPassword: taskpass123
+
+database:
+  image:
+    repository: sarojsanyasi/dso202-db
+    # Empty tag means "use .Chart.AppVersion" (see the templates).
+    tag: ""
+    pullPolicy: IfNotPresent
+  # Size of the PersistentVolumeClaim that holds the PostgreSQL data.
+  storage: 1Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+
+backend:
+  replicaCount: 1
+  image:
+    repository: sarojsanyasi/dso202-backend
+    tag: ""
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+
+frontend:
+  replicaCount: 1
+  image:
+    repository: sarojsanyasi/dso202-frontend
+    tag: ""
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+  service:
+    # NodePort or ClusterIP.
+    type: NodePort
+    # Used only when type is NodePort. Must be in 30000 to 32767.
+    nodePort: 30080
+
+# Namespace ResourceQuota (Assignment 1 Task 6).
+quota:
+  pods: "6"
+  requests:
+    cpu: 750m
+    memory: 768Mi
+  limits:
+    cpu: 1500m
+    memory: 1536Mi
+
+# Per container LimitRange (Assignment 1 Task 6).
+limitRange:
+  default:
+    cpu: 200m
+    memory: 256Mi
+  defaultRequest:
+    cpu: 100m
+    memory: 128Mi
+  max:
+    cpu: 500m
+    memory: 512Mi
+  min:
+    cpu: 50m
+    memory: 64Mi

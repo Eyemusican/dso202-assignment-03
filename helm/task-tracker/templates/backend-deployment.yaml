@@ -1,0 +1,70 @@
+{{- /*
+backend-deployment.yaml - the API, replicaCount copies.
+Reads DB settings from the ConfigMap and credentials from the Secret.
+*/}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  labels:
+    {{- include "task-tracker.labels" . | nindent 4 }}
+    tier: backend
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "task-tracker.selectorLabels" . | nindent 6 }}
+      tier: backend
+  template:
+    metadata:
+      labels:
+        {{- include "task-tracker.labels" . | nindent 8 }}
+        tier: backend
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: task-tracker-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: task-tracker-config
+                  key: DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: task-tracker-config
+                  key: DB_NAME
+            - name: APP_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: task-tracker-config
+                  key: APP_PORT
+            - name: CORS_ORIGIN
+              valueFrom:
+                configMapKeyRef:
+                  name: task-tracker-config
+                  key: CORS_ORIGIN
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: task-tracker-secret
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: task-tracker-secret
+                  key: DB_PASSWORD
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}

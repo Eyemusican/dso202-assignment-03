@@ -1,0 +1,40 @@
+{{- /*
+tests/test-connection.yaml - run by "helm test". Exit 0 means pass.
+The hook annotation stops it being created by install or upgrade.
+Resources respect the chart's LimitRange minimum (50m CPU, 64Mi memory),
+otherwise the API server would reject the test Pod.
+*/}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .Release.Name }}-test-connection
+  labels:
+    {{- include "task-tracker.labels" . | nindent 4 }}
+    tier: test
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  restartPolicy: Never
+  containers:
+    - name: wget
+      image: busybox:1.37
+      # A block scalar (|) keeps the script as one string, since it contains ": "
+      command:
+        - sh
+        - -c
+        - |
+          set -e
+          echo "1. backend API through backend-svc"
+          wget -qO- http://backend-svc:8080/api/tasks | grep -q '"title"'
+          echo "   ok, the backend returned tasks from the database"
+          echo "2. frontend page through frontend-svc"
+          wget -qO- http://frontend-svc:8080 | grep -q "Field Log"
+          echo "   ok, the frontend served the Field Log page"
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          cpu: 100m
+          memory: 64Mi
